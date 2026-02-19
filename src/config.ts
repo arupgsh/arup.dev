@@ -19,13 +19,14 @@ export const SITE = {
   giscus: {
     enabled: true,
     repo: "arupgsh/arup.dev",
-    repoId: "R_kgDORUS3uA",
+    repoId: "R_kgDORUS3uA", // Get from https://giscus.app
     category: "General",
-    categoryId: "DIC_kwDORUS3uM4C20Sd",
+    categoryId: "DIC_kwDORUS3uM4C20Sd", // Get from https://giscus.app
     mapping: "pathname",
     reactionsEnabled: "1",
     emitMetadata: "0",
     inputPosition: "top",
+    theme: "preferred_color_scheme",
     lang: "en",
   },
   dynamicOgImage: true,

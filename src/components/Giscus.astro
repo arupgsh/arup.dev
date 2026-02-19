@@ -1,7 +1,7 @@
 ---
 import { SITE } from "@/config";
 
-const { enabled, repo, repoId, category, categoryId, mapping, reactionsEnabled, emitMetadata, inputPosition, lang } = SITE.giscus;
+const { enabled, repo, repoId, category, categoryId, mapping, reactionsEnabled, emitMetadata, inputPosition, theme, lang } = SITE.giscus;
 
 // Only render if giscus is enabled
 if (!enabled) {
@@ -10,64 +10,55 @@ if (!enabled) {
 ---
 
 {enabled && (
-  <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start">
-    <span class="italic">Comments:</span>
-    <div class="giscus-wrapper w-full">
-      <script
-        is:inline
-        src="https://giscus.app/client.js"
-        data-repo={repo}
-        data-repo-id={repoId}
-        data-category={category}
-        data-category-id={categoryId}
-        data-mapping={mapping}
-        data-strict="0"
-        data-reactions-enabled={reactionsEnabled}
-        data-emit-metadata={emitMetadata}
-        data-input-position={inputPosition}
-        data-theme="light"
-        data-lang={lang}
-        data-loading="lazy"
-        crossorigin="anonymous"
-        async
-      ></script>
-    </div>
+  <div class="giscus-wrapper mt-8">
+    <script
+      is:inline
+      src="https://giscus.app/client.js"
+      data-repo={repo}
+      data-repo-id={repoId}
+      data-category={category}
+      data-category-id={categoryId}
+      data-mapping={mapping}
+      data-strict="0"
+      data-reactions-enabled={reactionsEnabled}
+      data-emit-metadata={emitMetadata}
+      data-input-position={inputPosition}
+      data-theme={theme}
+      data-lang={lang}
+      data-loading="lazy"
+      crossorigin="anonymous"
+      async
+    ></script>
   </div>
 )}
 
 <script is:inline>
   // Sync giscus theme with site theme
   function setGiscusTheme() {
-    const theme = document.documentElement.getAttribute('data-theme') || 
-                  localStorage.getItem('theme') || 
-                  (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const theme = localStorage.getItem("theme") || "light";
+    const giscusTheme = theme === "dark" ? "dark" : "light";
     
-    const iframe = document.querySelector('iframe.giscus-frame');
-    if (!iframe) return;
+    function sendMessage(message) {
+      const iframe = document.querySelector('iframe.giscus-frame');
+      if (iframe) {
+        iframe.contentWindow?.postMessage({ giscus: message }, 'https://giscus.app');
+      }
+    }
     
-    iframe.contentWindow?.postMessage(
-      { giscus: { setConfig: { theme: theme } } },
-      'https://giscus.app'
-    );
+    sendMessage({
+      setConfig: {
+        theme: giscusTheme,
+      },
+    });
   }
 
-  // Set theme on giscus load
-  window.addEventListener('message', (event) => {
-    if (event.origin !== 'https://giscus.app') return;
-    if (!(typeof event.data === 'object' && event.data.giscus)) return;
-    
-    setGiscusTheme();
-  });
+  // Set theme on page load
+  document.addEventListener('DOMContentLoaded', setGiscusTheme);
   
   // Listen for theme changes
   const observer = new MutationObserver(() => setGiscusTheme());
-  observer.observe(document.documentElement, { 
-    attributes: true, 
-    attributeFilter: ['data-theme'] 
-  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class'] });
   
   // Update theme after page swap (Astro view transitions)
-  document.addEventListener('astro:after-swap', () => {
-    setTimeout(setGiscusTheme, 100);
-  });
+  document.addEventListener('astro:after-swap', setGiscusTheme);
 </script>
