@@ -1,0 +1,73 @@
+---
+import { SITE } from "@/config";
+
+const { enabled, repo, repoId, category, categoryId, mapping, reactionsEnabled, emitMetadata, inputPosition, lang } = SITE.giscus;
+
+// Only render if giscus is enabled
+if (!enabled) {
+  return null;
+}
+---
+
+{enabled && (
+  <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start">
+    <span class="italic">Comments:</span>
+    <div class="giscus-wrapper w-full">
+      <script
+        is:inline
+        src="https://giscus.app/client.js"
+        data-repo={repo}
+        data-repo-id={repoId}
+        data-category={category}
+        data-category-id={categoryId}
+        data-mapping={mapping}
+        data-strict="0"
+        data-reactions-enabled={reactionsEnabled}
+        data-emit-metadata={emitMetadata}
+        data-input-position={inputPosition}
+        data-theme="light"
+        data-lang={lang}
+        data-loading="lazy"
+        crossorigin="anonymous"
+        async
+      ></script>
+    </div>
+  </div>
+)}
+
+<script is:inline>
+  // Sync giscus theme with site theme
+  function setGiscusTheme() {
+    const theme = document.documentElement.getAttribute('data-theme') || 
+                  localStorage.getItem('theme') || 
+                  (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    
+    const iframe = document.querySelector('iframe.giscus-frame');
+    if (!iframe) return;
+    
+    iframe.contentWindow?.postMessage(
+      { giscus: { setConfig: { theme: theme } } },
+      'https://giscus.app'
+    );
+  }
+
+  // Set theme on giscus load
+  window.addEventListener('message', (event) => {
+    if (event.origin !== 'https://giscus.app') return;
+    if (!(typeof event.data === 'object' && event.data.giscus)) return;
+    
+    setGiscusTheme();
+  });
+  
+  // Listen for theme changes
+  const observer = new MutationObserver(() => setGiscusTheme());
+  observer.observe(document.documentElement, { 
+    attributes: true, 
+    attributeFilter: ['data-theme'] 
+  });
+  
+  // Update theme after page swap (Astro view transitions)
+  document.addEventListener('astro:after-swap', () => {
+    setTimeout(setGiscusTheme, 100);
+  });
+</script>
