@@ -45,6 +45,7 @@ export default defineConfig({
     },
   },
   image: {
+    domains: ["arup.dev"],
     responsiveStyles: true,
     layout: "constrained",
   },

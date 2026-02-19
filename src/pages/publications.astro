@@ -1,0 +1,146 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import Main from "@/layouts/Main.astro";
+import { SITE } from "@/config";
+import bibtexSource from "@/data/publications.bib?raw";
+import { parseBibtexPublications } from "@/utils/parseBibtex";
+
+const publications = parseBibtexPublications(bibtexSource).sort((publicationA, publicationB) => {
+  const yearA = Number.parseInt(publicationA.year, 10) || 0;
+  const yearB = Number.parseInt(publicationB.year, 10) || 0;
+
+  if (yearA !== yearB) {
+    return yearB - yearA;
+  }
+
+  return publicationA.title.localeCompare(publicationB.title);
+});
+
+const publicationsByYear = publications.reduce<Record<string, typeof publications>>(
+  (groups, publication) => {
+    const year = publication.year || "Unknown";
+    if (!groups[year]) {
+      groups[year] = [];
+    }
+    groups[year].push(publication);
+    return groups;
+  },
+  {}
+);
+
+const sortedYears = Object.keys(publicationsByYear).sort((yearA, yearB) => {
+  if (yearA === "Unknown") {
+    return 1;
+  }
+
+  if (yearB === "Unknown") {
+    return -1;
+  }
+
+  return Number(yearB) - Number(yearA);
+});
+---
+
+<Layout title={`Publications | ${SITE.title}`}>
+  <Header />
+  <Main
+    pageTitle="Publications"
+    pageDesc="Publications parsed from Google Scholar BibTeX export."
+  >
+    {
+      publications.length === 0 ? (
+        <p class="rounded-lg border border-border p-4">
+          No publications found. Add your entries in
+          <strong> src/data/publications.bib</strong>.
+        </p>
+      ) : (
+        <div class="space-y-8">
+          {sortedYears.map(year => (
+            <section>
+              <h2 class="mb-4 text-xl font-semibold">{year}</h2>
+              <ol class="space-y-4">
+                {publicationsByYear[year]?.map((publication, publicationIndex) => {
+                  const visibleAuthors = publication.authors.slice(0, 3);
+                  const collapsedAuthors = publication.authors.slice(3);
+                  const collapsedLabel = `and ${collapsedAuthors.length} more ${collapsedAuthors.length === 1 ? "author" : "authors"}`;
+                  const authorExtraId = `authors-extra-${year}-${publicationIndex}`;
+
+                  return (
+                    <li class="rounded-lg border border-border p-4">
+                      <h3 class="w-full text-lg font-semibold">{publication.title}</h3>
+
+                      <p class="mt-2 text-sm">
+                        <span class="font-semibold">Authors:</span>{" "}
+                        {visibleAuthors.join(", ") || "—"}
+                        {
+                          collapsedAuthors.length > 0 && (
+                            <>
+                              {" "}
+                              <button
+                                type="button"
+                                class="author-expand inline cursor-pointer border-0 bg-transparent p-0 align-baseline text-accent underline decoration-dashed underline-offset-4"
+                                aria-controls={authorExtraId}
+                                aria-expanded="false"
+                              >
+                                {collapsedLabel}
+                              </button>
+                              <span id={authorExtraId} class="hidden">, {collapsedAuthors.join(", ")}</span>
+                            </>
+                          )
+                        }
+                      </p>
+
+                      <p class="mt-1 text-sm">
+                        <span class="font-semibold">Journal:</span>{" "}
+                        {publication.journal || "—"}
+                      </p>
+
+                      <p class="mt-1 text-sm">
+                        <span class="font-semibold">Year:</span>{" "}
+                        {publication.year || "—"}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+          ))}
+        </div>
+      )
+    }
+  </Main>
+  <Footer />
+</Layout>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    document.querySelectorAll<HTMLButtonElement>(".author-expand").forEach(button => {
+      if (button.dataset.bound === "true") {
+        return;
+      }
+
+      button.dataset.bound = "true";
+
+      button.addEventListener("click", () => {
+        const targetId = button.getAttribute("aria-controls");
+        if (!targetId) {
+          return;
+        }
+
+        const extraAuthors = document.getElementById(targetId);
+        if (!extraAuthors) {
+          return;
+        }
+
+        const isExpanded = button.getAttribute("aria-expanded") === "true";
+        const nextExpanded = !isExpanded;
+
+        button.setAttribute("aria-expanded", String(nextExpanded));
+        button.hidden = nextExpanded;
+        extraAuthors.classList.toggle("hidden", !nextExpanded);
+      });
+    });
+  });
+</script>

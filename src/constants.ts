@@ -7,6 +7,8 @@ import IconWhatsapp from "@/assets/icons/IconWhatsapp.svg";
 import IconFacebook from "@/assets/icons/IconFacebook.svg";
 import IconTelegram from "@/assets/icons/IconTelegram.svg";
 import IconPinterest from "@/assets/icons/IconPinterest.svg";
+import IconBrandBluesky from "@/assets/icons/IconBrandBluesky.svg";
+import IconGoogleScholar from "@/assets/icons/IconGoogleScholar.svg";
 import { SITE } from "@/config";
 
 interface Social {
@@ -19,25 +21,31 @@ interface Social {
 export const SOCIALS: Social[] = [
   {
     name: "GitHub",
-    href: "https://github.com/satnaing/astro-paper",
+    href: "https://github.com/arupgsh",
     linkTitle: `${SITE.title} on GitHub`,
     icon: IconGitHub,
   },
   {
-    name: "X",
-    href: "https://x.com/username",
-    linkTitle: `${SITE.title} on X`,
-    icon: IconBrandX,
+    name: "Google Scholar",
+    href: "https://scholar.google.com/citations?user=W33ADNoAAAAJ",
+    linkTitle: `${SITE.title} on Google Scholar`,
+    icon: IconGoogleScholar,
+  },
+  {
+    name: "Bluesky",
+    href: "https://bsky.app/profile/arup.dev",
+    linkTitle: `${SITE.title} on Bluesky`,
+    icon: IconBrandBluesky,
   },
   {
     name: "LinkedIn",
-    href: "https://www.linkedin.com/in/username/",
+    href: "https://www.linkedin.com/in/arupgsh/",
     linkTitle: `${SITE.title} on LinkedIn`,
     icon: IconLinkedin,
   },
   {
     name: "Mail",
-    href: "mailto:yourmail@gmail.com",
+    href: "mailto:arup.ghosh@iscb.org",
     linkTitle: `Send an email to ${SITE.title}`,
     icon: IconMail,
   },

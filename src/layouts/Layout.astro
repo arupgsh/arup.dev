@@ -30,22 +30,61 @@ const {
 } = Astro.props;
 
 const socialImageURL = new URL(ogImage, Astro.url);
+const siteUrl = new URL(SITE.website || Astro.url.origin);
+const isArticle = Boolean(pubDatetime);
+const ogType = isArticle ? "article" : "website";
 
-const structuredData = {
+const personData = {
   "@context": "https://schema.org",
-  "@type": "BlogPosting",
-  headline: `${title}`,
-  image: `${socialImageURL}`,
-  datePublished: `${pubDatetime?.toISOString()}`,
-  ...(modDatetime && { dateModified: modDatetime.toISOString() }),
-  author: [
-    {
-      "@type": "Person",
-      name: `${author}`,
-      ...(profile && { url: profile }),
-    },
+  "@type": "Person",
+  name: `${author}`,
+  ...(profile && { url: profile }),
+  sameAs: [
+    "https://scholar.google.com/citations?user=W33ADNoAAAAJ",
+    "https://orcid.org/my-orcid?orcid=0000-0003-3259-0124",
+    "https://github.com/arupgsh",
+    "https://www.linkedin.com/in/arupgsh/",
+    "https://bsky.app/profile/arup.dev",
   ],
 };
+
+const websiteData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: `${SITE.title}`,
+  url: siteUrl,
+  inLanguage: `${SITE.lang ?? "en"}`,
+};
+
+const pageData = isArticle
+  ? {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: `${title}`,
+      image: `${socialImageURL}`,
+      datePublished: `${pubDatetime?.toISOString()}`,
+      ...(modDatetime && { dateModified: modDatetime.toISOString() }),
+      author: [personData],
+      publisher: personData,
+      mainEntityOfPage: canonicalURL,
+    }
+  : {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: `${title}`,
+      url: canonicalURL,
+      description: `${description}`,
+      inLanguage: `${SITE.lang ?? "en"}`,
+      isPartOf: {
+        "@type": "WebSite",
+        name: `${SITE.title}`,
+        url: siteUrl,
+      },
+      author: personData,
+      ...(modDatetime && { dateModified: modDatetime.toISOString() }),
+    };
+
+const structuredData = [websiteData, personData, pageData];
 ---
 
 <!doctype html>
@@ -72,13 +111,17 @@ const structuredData = {
     <meta name="title" content={title} />
     <meta name="description" content={description} />
     <meta name="author" content={author} />
-    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="robots" content="index,follow" />
+    <link rel="sitemap" href="/rss.xml" />
 
     <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={ogType} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={socialImageURL} />
+    <meta property="og:site_name" content={SITE.title} />
+    <meta property="og:locale" content={SITE.lang ?? "en"} />
 
     <!-- Article Published/Modified time -->
     {

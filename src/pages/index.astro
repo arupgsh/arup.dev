@@ -1,5 +1,6 @@
 ---
 import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
@@ -7,7 +8,6 @@ import Socials from "@/components/Socials.astro";
 import LinkButton from "@/components/LinkButton.astro";
 import Card from "@/components/Card.astro";
 import getSortedPosts from "@/utils/getSortedPosts";
-import IconRss from "@/assets/icons/IconRss.svg";
 import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
 import { SITE } from "@/config";
 import { SOCIALS } from "@/constants";
@@ -23,48 +23,56 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
   <Header />
   <main id="main-content" data-layout="index" class="app-layout">
     <section id="hero" class:list={["pt-8 pb-6", "border-b border-border"]}>
-      <h1 class="my-4 inline-block text-4xl font-bold sm:my-8 sm:text-5xl">
-        Mingalaba
-      </h1>
-      <a
-        target="_blank"
-        href="/rss.xml"
-        class="inline-block"
-        aria-label="rss feed"
-        title="RSS Feed"
-      >
-        <IconRss
-          width={20}
-          height={20}
-          class="scale-125 stroke-accent stroke-3 rtl:-rotate-90"
-        />
-        <span class="sr-only">RSS Feed</span>
-      </a>
+      <div class="mt-4 grid gap-4 max-sm:grid-cols-1 sm:grid-cols-[auto,1fr] sm:items-start">
+        <h1 class="mb-2 text-4xl font-bold sm:col-start-2 sm:mb-0 sm:text-5xl">
+          Hei!👋
+        </h1>
 
-      <p>
-        AstroPaper is a minimal, responsive, accessible and SEO-friendly Astro
-        blog theme. This theme follows best practices and provides accessibility
-        out of the box. Light and dark mode are supported by default. Moreover,
-        additional color schemes can also be configured.
-      </p>
-      <p class="mt-2">
-        Read the blog posts or check
-        <LinkButton
-          class="underline decoration-dashed underline-offset-4 hover:text-accent"
-          href="https://github.com/satnaing/astro-paper#readme"
+        <a
+          href="/about"
+          class="inline-block h-[150px] w-[150px] shrink-0 justify-self-center overflow-hidden rounded-full border border-border transition duration-200 ease-out hover:-translate-y-0.5 hover:border-accent hover:shadow-sm focus-visible:-translate-y-0.5 focus-visible:border-accent focus-visible:shadow-sm sm:row-start-2 sm:justify-self-start"
+          aria-label="Go to about page"
+          title="About"
         >
-          README
-        </LinkButton> for more info.
-      </p>
-      {
-        // only display if at least one social link is enabled
-        SOCIALS.length > 0 && (
-          <div class="mt-4 flex max-sm:flex-col sm:items-center">
-            <div class="me-2 mb-1 whitespace-nowrap sm:mb-0">Social Links:</div>
-            <Socials />
-          </div>
-        )
-      }
+          <Image
+            src="https://arup.dev/assets/img/arup_ghosh_latest.JPG?1ddc2540fd4b4b1d3ad6de2a4f112006"
+            alt="Arup Ghosh"
+            width={150}
+            height={150}
+            sizes="150px"
+            class="h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+        </a>
+
+        <div class="sm:col-start-2 sm:row-start-2">
+          <p>
+            I am a postdoctoral researcher at the
+            <LinkButton
+              class="underline decoration-dashed underline-offset-4 hover:text-accent"
+              href="https://www.fhi.no/en"
+            >
+              Norwegian Institute of Public Health
+            </LinkButton>. My work sits between toxicology and genomics, where I
+            build new approach methodologies (NAMs) to help predict adverse
+            outcomes.
+          </p>
+          <p class="mt-2">
+            I enjoy applying machine learning to genomics and biomedical data
+            science to pull useful insights from large-scale datasets.
+          </p>
+          {
+            // only display if at least one social link is enabled
+            SOCIALS.length > 0 && (
+              <div class="mt-4 flex max-sm:flex-col sm:items-center">
+                <div class="me-2 mb-1 whitespace-nowrap sm:mb-0">Social Links:</div>
+                <Socials />
+              </div>
+            )
+          }
+        </div>
+      </div>
     </section>
 
     {
@@ -101,7 +109,7 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
     }
 
     <div class="my-8 text-center">
-      <LinkButton href="/posts/">
+      <LinkButton href="/post/">
         All Posts
         <IconArrowRight class="inline-block rtl:-rotate-180" />
       </LinkButton>
