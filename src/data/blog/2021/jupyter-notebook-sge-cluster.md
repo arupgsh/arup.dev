@@ -1,5 +1,5 @@
 ---
-title: Jupyter on an SGE Cluster: Reverse SSH Tunneling
+title: Jupyter on an SGE Cluster with Reverse SSH Tunneling
 author: Arup Ghosh
 pubDatetime: 2021-05-15T00:00:00.000Z
 featured: false

@@ -10,6 +10,7 @@ export async function getStaticPaths() {
   }));
 }
 
-const slugPath = String(Astro.params.slug ?? "").replace(/^\/+/, "");
-return Astro.redirect(`/post/${slugPath}`);
+return Astro.redirect(
+  `/post/${String(Astro.params.slug ?? "").replace(/^\/+/, "")}`
+);
 ---

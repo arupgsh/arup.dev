@@ -8,7 +8,6 @@ const blog = defineCollection({
   loader: glob({
     pattern: "**/[^_]*.md",
     base: `./${BLOG_PATH}`,
-    ignore: ["**/.*/**", "**/_*/**"],
   }),
   schema: ({ image }) =>
     z.object({

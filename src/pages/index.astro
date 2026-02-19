@@ -1,6 +1,5 @@
 ---
 import { getCollection } from "astro:content";
-import { Image } from "astro:assets";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
@@ -34,14 +33,14 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
           aria-label="Go to about page"
           title="About"
         >
-          <Image
-            src="https://arup.dev/assets/img/arup_ghosh_latest.JPG?1ddc2540fd4b4b1d3ad6de2a4f112006"
+          <img
+            src="/arup_ghosh_latest.jpg"
             alt="Arup Ghosh"
-            width={150}
-            height={150}
-            sizes="150px"
+            width="150"
+            height="150"
             class="h-full w-full object-cover"
-            loading="lazy"
+            loading="eager"
+            fetchpriority="high"
             decoding="async"
           />
         </a>
