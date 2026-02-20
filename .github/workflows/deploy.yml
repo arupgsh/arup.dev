@@ -1,22 +1,18 @@
-name: CI
+name: Deploy
 
 permissions:
-  contents: read
+  contents: write
 
 on:
-  pull_request:
-    types:
-      - opened
-      - edited
-      - synchronize
-      - reopened
-  workflow_call:
+  push:
+    branches:
+      - main
 
 jobs:
-  build:
-    name: Code standards & build
+  deploy:
+    name: Build & Deploy to gh-pages
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 10
 
     steps:
       - name: "☁️ Checkout repository"
@@ -28,11 +24,11 @@ jobs:
       - name: "📦 Install dependencies"
         run: bun install
 
-      - name: "🔎 Lint code"
-        run: bun run lint
-
-      - name: "📝 Checking code format"
-        run: bun run format:check
-
       - name: "🚀 Build the project"
         run: bun run build
+
+      - name: "🌐 Deploy to gh-pages"
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
