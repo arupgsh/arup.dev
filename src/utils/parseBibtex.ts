@@ -204,7 +204,7 @@ const parseEntries = (bibtex: string) => {
       break;
     }
 
-    let openBraceIndex = source.indexOf("{", atIndex);
+    const openBraceIndex = source.indexOf("{", atIndex);
     if (openBraceIndex === -1) {
       break;
     }
