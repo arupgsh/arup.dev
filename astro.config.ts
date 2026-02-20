@@ -9,8 +9,7 @@ import {
   transformerNotationWordHighlight,
 } from "@shikijs/transformers";
 import { transformerFileName } from "./src/utils/transformers/fileName";
-import { SITE } from "./sr
-import cloudflare from "@astrojs/cloudflare";
+import { SITE } from "./src/config";
 
 // https://astro.build/config
 export default defineConfig({
@@ -79,10 +78,4 @@ export default defineConfig({
     ],
   },
 
-  adapter: cloudflare(),
-});00],
-        styles: ["normal", "italic"],
-      },
-    ],
-  },
 });
