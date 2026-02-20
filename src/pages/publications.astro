@@ -47,19 +47,10 @@ const sortedYears = Object.keys(publicationsByYear).sort((yearA, yearB) => {
   <Header />
   <Main
     pageTitle="Publications"
-    pageDesc="For latest publications, please check my Google Scholar profile."
+    pageDescHtml={
+      'For latest publications, please check my <a href="https://scholar.google.com/citations?hl=en&user=W33ADNoAAAAJ&view_op=list_works&sortby=pubdate" class="text-accent underline decoration-dashed underline-offset-4" rel="noopener noreferrer" target="_blank">Google Scholar profile</a>.'
+    }
   >
-    <p class="mb-6 text-sm">
-      Latest publications:
-      <a
-        href="https://scholar.google.com/citations?user=W33ADNoAAAAJ"
-        class="text-accent underline decoration-dashed underline-offset-4"
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        Google Scholar profile
-      </a>.
-    </p>
     {
       publications.length === 0 ? (
         <p class="rounded-lg border border-border p-4">
