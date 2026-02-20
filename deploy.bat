@@ -7,7 +7,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-bunx wrangler pages deploy .\dist\ --project-name=<project-name>
+bunx wrangler pages deploy .\dist\ --project-name=arup-dev
 if errorlevel 1 (
   echo Deploy failed.
   exit /b 1

@@ -27,3 +27,4 @@ pnpm-debug.log*
 
 public/pagefind
 src/pages/blog/arup.dev.code-workspace
+deploy.bat
