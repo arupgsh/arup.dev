@@ -1,5 +1,5 @@
 ---
-title: Speed Up R Package Installation
+title: Improve R Package Installation Speed
 author: Arup Ghosh
 pubDatetime: 2025-08-10T00:00:00.000Z
 featured: false
@@ -81,6 +81,8 @@ sudo apt install --no-install-recommends r-cran-ggplot2
 conda create -n r-fast -c conda-forge r-base r-ggplot2
 conda activate r-fast
 ```
+
+- Disable progress bar while installing an package, use the `quiet=TRUE` option with `install.packages()`.  
 
 ## References
 
