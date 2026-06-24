@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PubMed MeSH Term Frequency Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f2; --bg3: #ebebea;
+    --text1: #1a1a18; --text2: #6b6b66; --text3: #9e9e98;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --accent: #4a5fe0; --accent-bg: #eef0fd;
+    --success: #1d9e75; --success-bg: #e1f5ee;
+    --warn: #ba7517; --warn-bg: #faeeda;
+    --danger: #a32d2d; --danger-bg: #fcebeb;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text1: #f0f0ec; --text2: #a0a09a; --text3: #6e6e68;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --accent: #7b8df5; --accent-bg: #1e2240;
+      --success: #5dcaa5; --success-bg: #04342c;
+      --warn: #ef9f27; --warn-bg: #412402;
+      --danger: #f09595; --danger-bg: #501313;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text1); font-size: 14px; line-height: 1.6; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { color: var(--text2); font-size: 13px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 300px 1fr; gap: 16px; align-items: start; }
+  .panel { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
+  .panel-title { font-size: 12px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .section { margin-bottom: 20px; }
+  label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 6px; }
+  select, input[type=text] { width: 100%; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius); color: var(--text1); font-size: 13px; padding: 7px 10px; outline: none; }
+  select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(74,95,224,0.15); }
+  .year-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .year-btn { padding: 5px 4px; font-size: 12px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text2); cursor: pointer; text-align: center; transition: all 0.15s; user-select: none; }
+  .year-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .year-btn.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); font-weight: 500; }
+  .term-search { display: flex; gap: 6px; margin-bottom: 10px; }
+  .term-search input { flex: 1; }
+  .term-search button { padding: 7px 12px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; font-size: 13px; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+  .term-search button:hover { opacity: 0.88; }
+  .term-search button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .term-list { max-height: 220px; overflow-y: auto; border: 0.5px solid var(--border); border-radius: var(--radius); }
+  .term-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 0.5px solid var(--border); cursor: pointer; font-size: 13px; transition: background 0.1s; }
+  .term-item:last-child { border-bottom: none; }
+  .term-item:hover { background: var(--bg2); }
+  .term-item.selected { background: var(--accent-bg); }
+  .term-item input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
+  .term-category { font-size: 10px; color: var(--text3); background: var(--bg3); padding: 1px 5px; border-radius: 4px; margin-left: auto; flex-shrink: 0; }
+  .selected-tags { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; }
+  .tag { display: flex; align-items: center; gap: 4px; padding: 3px 8px 3px 10px; background: var(--accent-bg); color: var(--accent); border-radius: 20px; font-size: 12px; font-weight: 500; }
+  .tag button { background: none; border: none; cursor: pointer; color: var(--accent); padding: 0; line-height: 1; font-size: 14px; opacity: 0.7; }
+  .tag button:hover { opacity: 1; }
+  .controls-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+  .controls-row > div { flex: 1; min-width: 120px; }
+  .controls-row select { width: 100%; }
+  .btn-run { padding: 8px 20px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .btn-run:hover { opacity: 0.88; }
+  .btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
+  .chart-wrapper { position: relative; width: 100%; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; }
+  .chart-canvas-wrap { position: relative; width: 100%; }
+  .metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .metric { background: var(--bg2); border-radius: var(--radius); padding: 12px 14px; }
+  .metric-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .metric-value { font-size: 22px; font-weight: 500; color: var(--text1); }
+  .metric-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .status-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg2); border-radius: var(--radius); font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+  .spinner { width: 14px; height: 14px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .progress-bar { height: 3px; background: var(--bg3); border-radius: 2px; margin-bottom: 12px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+  .legend-row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; font-size: 12px; color: var(--text2); }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text2); }
+  .empty-state i { font-size: 40px; color: var(--text3); display: block; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; }
+  .top-label { font-size: 10px; color: var(--text3); }
+  .group-check-list { max-height: 160px; overflow-y: auto; }
+  .group-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; cursor: pointer; }
+  .group-item input { accent-color: var(--accent); }
+  .trend-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+  .trend-up { background: var(--success-bg); color: var(--success); }
+  .trend-down { background: var(--danger-bg); color: var(--danger); }
+  .trend-flat { background: var(--bg3); color: var(--text3); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; font-weight: 500; font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 0.5px solid var(--border2); }
+  td { padding: 8px 10px; border-bottom: 0.5px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  .tab-row { display: flex; gap: 2px; margin-bottom: 14px; border-bottom: 0.5px solid var(--border); padding-bottom: 0; }
+  .tab-btn { padding: 8px 16px; font-size: 13px; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--text2); margin-bottom: -0.5px; }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+  .tab-btn:hover:not(.active) { color: var(--text1); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  @media (max-width: 760px) { .grid-3 { grid-template-columns: 1fr; } .year-grid { grid-template-columns: repeat(5, 1fr); } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1><i class="ti ti-dna" style="font-size:22px;vertical-align:-3px;margin-right:8px;color:var(--accent)" aria-hidden="true"></i>PubMed MeSH frequency dashboard</h1>
+  <p class="subtitle">Explore publication frequency trends for Medical Subject Headings (MeSH) from PubMed via the NCBI E-utilities API.</p>
+
+  <div class="grid-3">
+    <div>
+      <div class="panel section">
+        <div class="panel-title"><i class="ti ti-calendar" aria-hidden="true"></i> Years</div>
+        <div class="year-grid" id="yearGrid"></div>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <button onclick="selectYearRange(2015,2026)" style="flex:1;padding:5px;font-size:11px;border:0.5px solid var(--border2);border-radius:6px;background:var(--bg2);color:var(--text2);cursor:pointer;">2015–2026</button>
+          <button onclick="selectYearRange(2010,2026)" style="flex:1;padding:5px;font-size:11px;border:0.5px solid var(--border2);border-radius:6px;background:var(--bg2);color:var(--text2);cursor:pointer;">2010–2026</button>
+          <button onclick="clearYears()" style="flex:1;padding:5px;font-size:11px;border:0.5px solid var(--border2);border-radius:6px;background:var(--bg2);color:var(--text2);cursor:pointer;">Clear</button>
+        </div>
+      </div>
+
+      <div class="panel section">
+        <div class="panel-title"><i class="ti ti-sitemap" aria-hidden="true"></i> MeSH categories</div>
+        <div class="group-check-list" id="categoryList"></div>
+      </div>
+
+      <div class="panel section">
+        <div class="panel-title"><i class="ti ti-search" aria-hidden="true"></i> Search & select terms</div>
+        <div class="term-search">
+          <input type="text" id="termInput" placeholder="e.g. Diabetes Mellitus" onkeydown="if(event.key==='Enter')searchTermSuggestions()">
+          <button onclick="searchTermSuggestions()" id="searchBtn"><i class="ti ti-search" aria-hidden="true"></i> Search</button>
+        </div>
+        <div class="term-list" id="termList">
+          <div style="padding:12px;color:var(--text3);font-size:13px;text-align:center;">Search for a MeSH term above</div>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="panel-title"><i class="ti ti-tags" aria-hidden="true"></i> Selected terms <span class="info-badge" id="selectedCount">0</span></div>
+          <div class="selected-tags" id="selectedTags">
+            <span style="color:var(--text3);font-size:12px;">No terms selected</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel section">
+        <div class="panel-title"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i> Chart options</div>
+        <div style="display:grid;gap:10px;">
+          <div>
+            <label>Max terms to display</label>
+            <select id="maxTerms">
+              <option value="5">Top 5</option>
+              <option value="10" selected>Top 10</option>
+              <option value="15">Top 15</option>
+              <option value="20">Top 20</option>
+              <option value="999">All selected</option>
+            </select>
+          </div>
+          <div>
+            <label>Sort by</label>
+            <select id="sortBy">
+              <option value="total_desc">Total count (high → low)</option>
+              <option value="total_asc">Total count (low → high)</option>
+              <option value="recent_desc">Most recent year (high → low)</option>
+              <option value="growth_desc">Growth rate (high → low)</option>
+              <option value="alpha">Alphabetical</option>
+            </select>
+          </div>
+          <div>
+            <label>Chart type</label>
+            <select id="chartType">
+              <option value="bar">Grouped bar</option>
+              <option value="line">Line trend</option>
+              <option value="bar_stacked">Stacked bar</option>
+            </select>
+          </div>
+          <div>
+            <label>Normalize</label>
+            <select id="normalize">
+              <option value="raw">Raw counts</option>
+              <option value="pct">% of total PubMed for year</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-run" id="runBtn" onclick="runAnalysis()" style="width:100%;justify-content:center;margin-bottom:8px;">
+        <i class="ti ti-player-play" aria-hidden="true"></i> Fetch &amp; analyze
+      </button>
+      <p style="font-size:11px;color:var(--text3);text-align:center;">Uses NCBI E-utilities API (rate-limited to 3 req/s; heavily optimized via local cache)</p>
+    </div>
+
+    <div>
+      <div class="chart-wrapper">
+        <div class="tab-row">
+          <button class="tab-btn active" onclick="switchTab('chart')">Chart</button>
+          <button class="tab-btn" onclick="switchTab('table')">Data table</button>
+          <button class="tab-btn" onclick="switchTab('trends')">Trend analysis</button>
+        </div>
+
+        <div id="statusBar" class="status-bar" style="display:none;">
+          <div class="spinner" id="spinner"></div>
+          <span id="statusText">Fetching data…</span>
+        </div>
+        <div class="progress-bar" id="progressBar" style="display:none;"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+        <div id="tab-chart" class="tab-panel active">
+          <div id="metricsRow" class="metrics-row" style="display:none;"></div>
+          <div class="legend-row" id="legendRow"></div>
+          <div id="emptyState" class="empty-state">
+            <i class="ti ti-chart-bar" aria-hidden="true"></i>
+            <p>Select years and terms, then click "Fetch &amp; analyze" to see frequency trends.</p>
+          </div>
+          <div class="chart-canvas-wrap" id="chartWrap" style="display:none;">
+            <canvas id="mainChart" role="img" aria-label="MeSH term publication frequency chart"></canvas>
+          </div>
+        </div>
+
+        <div id="tab-table" class="tab-panel">
+          <div id="tableContent">
+            <div class="empty-state"><i class="ti ti-table" aria-hidden="true"></i><p>Run analysis to see data table.</p></div>
+          </div>
+        </div>
+
+        <div id="tab-trends" class="tab-panel">
+          <div id="trendsContent">
+            <div class="empty-state"><i class="ti ti-trending-up" aria-hidden="true"></i><p>Run analysis to see trend insights.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MESH_CATEGORIES = [
+  { code: 'A', label: 'Anatomy', color: '#378ADD' },
+  { code: 'B', label: 'Organisms', color: '#1D9E75' },
+  { code: 'C', label: 'Diseases', color: '#E24B4A' },
+  { code: 'D', label: 'Chemicals & Drugs', color: '#7F77DD' },
+  { code: 'E', label: 'Analytical & Therapeutic', color: '#D85A30' },
+  { code: 'F', label: 'Psychiatry & Psychology', color: '#D4537E' },
+  { code: 'G', label: 'Biological Sciences', color: '#639922' },
+  { code: 'H', label: 'Physical Sciences', color: '#888780' },
+  { code: 'I', label: 'Anthropology, Education, Sociology', color: '#BA7517' },
+  { code: 'J', label: 'Technology & Food', color: '#185FA5' },
+  { code: 'K', label: 'Humanities', color: '#534AB7' },
+  { code: 'L', label: 'Information Science', color: '#0F6E56' },
+  { code: 'M', label: 'Named Groups', color: '#993C1D' },
+  { code: 'N', label: 'Health Care', color: '#993556' },
+  { code: 'V', label: 'Publication Characteristics', color: '#5F5E5A' },
+  { code: 'Z', label: 'Geographic', color: '#63430b' }
+];
+
+const POPULAR_TERMS = [
+  { name: 'Neoplasms', category: 'C' }, { name: 'Diabetes Mellitus', category: 'C' },
+  { name: 'Cardiovascular Diseases', category: 'C' }, { name: 'Inflammation', category: 'C' },
+  { name: 'COVID-19', category: 'C' }, { name: 'Hypertension', category: 'C' },
+  { name: 'Mental Disorders', category: 'F' }, { name: 'Alzheimer Disease', category: 'C' },
+  { name: 'Machine Learning', category: 'L' }, { name: 'CRISPR-Cas Systems', category: 'G' },
+  { name: 'Immunotherapy', category: 'E' }, { name: 'Microbiota', category: 'B' },
+  { name: 'Obesity', category: 'C' }, { name: 'Artificial Intelligence', category: 'L' },
+  { name: 'Sepsis', category: 'C' }, { name: 'MicroRNAs', category: 'G' },
+  { name: 'Stem Cells', category: 'A' }, { name: 'Antibiotic Resistance', category: 'D' }
+];
+
+const CHART_COLORS = [
+  '#378ADD','#E24B4A','#1D9E75','#D4537E','#7F77DD','#D85A30','#639922','#BA7517','#185FA5',
+  '#993556','#534AB7','#0F6E56','#993C1D','#888780','#5F5E5A','#63430b','#E24B4A','#5DCAA5'
+];
+
+let selectedTerms = [], selectedYears = [], resultsData = {}, chartInstance = null, yearlyTotals = {};
+const CACHE_PREFIX = "mesh_dash_", CURRENT_YEAR = 2026;
+
+function getCachedValue(key) {
+  try {
+    const cached = localStorage.getItem(CACHE_PREFIX + key);
+    if (!cached) return null;
+    const { value, timestamp, year } = JSON.parse(cached);
+    if (year === CURRENT_YEAR && Date.now() - timestamp > 86400000) {
+      localStorage.removeItem(CACHE_PREFIX + key);
+      return null;
+    }
+    return value;
+  } catch (e) { return null; }
+}
+
+function setCachedValue(key, value, year) {
+  try {
+    localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ value, timestamp: Date.now(), year: parseInt(year,10) }));
+  } catch (e) { if (e.name === 'QuotaExceededError') { localStorage.clear(); } }
+}
+
+function initYears() {
+  const grid = document.getElementById('yearGrid');
+  for (let y = 2026; y >= 2000; y--) {
+    const btn = document.createElement('div');
+    btn.className = 'year-btn'; btn.textContent = y; btn.dataset.year = y;
+    btn.onclick = () => toggleYear(y, btn);
+    grid.appendChild(btn);
+  }
+}
+
+function toggleYear(y, btn) {
+  const idx = selectedYears.indexOf(y);
+  if (idx > -1) { selectedYears.splice(idx, 1); btn.classList.remove('active'); }
+  else { selectedYears.push(y); btn.classList.add('active'); }
+  selectedYears.sort((a, b) => a - b);
+}
+
+function selectYearRange(from, to) {
+  document.querySelectorAll('.year-btn').forEach(btn => {
+    const y = +btn.dataset.year;
+    if (y >= from && y <= to) { btn.classList.add('active'); if (!selectedYears.includes(y)) selectedYears.push(y); }
+  });
+  selectedYears.sort((a, b) => a - b);
+}
+
+function clearYears() {
+  selectedYears = [];
+  document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('active'));
+}
+
+function initCategories() {
+  const list = document.getElementById('categoryList');
+  MESH_CATEGORIES.forEach(cat => {
+    const item = document.createElement('label');
+    item.className = 'group-item';
+    item.innerHTML = `<input type="checkbox" checked data-cat="${cat.code}"> <span style="width:8px;height:8px;border-radius:50%;background:${cat.color};display:inline-block;flex-shrink:0"></span> <span><b style="font-size:11px;color:var(--text3)">${cat.code}</b> &nbsp;${cat.label}</span>`;
+    list.appendChild(item);
+  });
+}
+
+async function searchTermSuggestions() {
+  const q = document.getElementById('termInput').value.trim();
+  if (!q) return showPopularTerms();
+  const btn = document.getElementById('searchBtn'); btn.disabled = true;
+  const list = document.getElementById('termList');
+  list.innerHTML = '<div style="padding:12px;color:var(--text3);font-size:13px;text-align:center;"><div class="spinner" style="display:inline-block;margin-right:8px;vertical-align:middle;"></div>Searching MeSH database…</div>';
+  try {
+    const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=mesh&term=${encodeURIComponent(q)}&retmax=20&retmode=json`;
+    const resp = await fetch(url); const data = await resp.json();
+    const ids = data.esearchresult?.idlist || [];
+    if (!ids.length) {
+      list.innerHTML = '<div style="padding:12px;color:var(--text3);font-size:13px;text-align:center;">No MeSH terms found.</div>';
+      btn.disabled = false; return;
+    }
+    const sumUrl = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=mesh&id=${ids.join(',')}&retmode=json`;
+    const sumResp = await fetch(sumUrl); const sumData = await sumResp.json();
+    renderTermList(Object.values(sumData.result || {}).filter(r => r.uid));
+  } catch(e) { list.innerHTML = '<div style="padding:12px;color:var(--danger);font-size:13px;text-align:center;">Error fetching results.</div>'; }
+  btn.disabled = false;
+}
+
+function renderTermList(terms) {
+  const list = document.getElementById('termList');
+  if (!terms.length) { list.innerHTML = '<div style="padding:12px;color:var(--text3);font-size:13px;text-align:center;">No results found.</div>'; return; }
+  list.innerHTML = '';
+  terms.forEach(t => {
+    const name = t.ds_meshterms?.[0] || t.ds_name || 'Unknown';
+    const tree = t.ds_treenumbers?.[0] || ''; const cat = tree ? tree[0] : '';
+    const catInfo = MESH_CATEGORIES.find(c => c.code === cat);
+    const isSelected = selectedTerms.some(s => s.name === name);
+    const item = document.createElement('div');
+    item.className = 'term-item' + (isSelected ? ' selected' : '');
+    item.innerHTML = `<input type="checkbox" ${isSelected ? 'checked' : ''}> <span style="flex:1;font-size:13px;">${name}</span> ${catInfo ? `<span class="term-category" style="color:${catInfo.color}">${catInfo.code}</span>` : ''}`;
+    item.querySelector('input').onchange = (e) => { e.target.checked ? addTerm(name, cat) : removeTerm(name); item.classList.toggle('selected', e.target.checked); };
+    item.onclick = (e) => { if (e.target.tagName !== 'INPUT') item.querySelector('input').click(); };
+    list.appendChild(item);
+  });
+}
+
+function showPopularTerms() {
+  const list = document.getElementById('termList');
+  list.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:var(--text3);background:var(--bg2);">Popular terms — click to add</div>';
+  POPULAR_TERMS.forEach(t => {
+    const catInfo = MESH_CATEGORIES.find(c => c.code === t.category);
+    const isSelected = selectedTerms.some(s => s.name === t.name);
+    const item = document.createElement('div');
+    item.className = 'term-item' + (isSelected ? ' selected' : '');
+    item.innerHTML = `<input type="checkbox" ${isSelected ? 'checked' : ''}> <span style="flex:1;font-size:13px;">${t.name}</span> <span class="term-category" style="color:${catInfo?.color || '#888'}">${t.category}</span>`;
+    item.querySelector('input').onchange = (e) => { e.target.checked ? addTerm(t.name, t.category) : removeTerm(t.name); item.classList.toggle('selected', e.target.checked); };
+    item.onclick = (e) => { if (e.target.tagName !== 'INPUT') item.querySelector('input').click(); };
+    list.appendChild(item);
+  });
+}
+
+function addTerm(name, category) { if (!selectedTerms.some(t => t.name === name)) { selectedTerms.push({ name, category }); renderSelectedTags(); } }
+function removeTerm(name) {
+  selectedTerms = selectedTerms.filter(t => t.name !== name); renderSelectedTags();
+  document.querySelectorAll('.term-item').forEach(item => {
+    if (item.querySelector('span')?.textContent === name) { item.classList.remove('selected'); const cb = item.querySelector('input'); if(cb) cb.checked = false; }
+  });
+}
+
+function renderSelectedTags() {
+  const container = document.getElementById('selectedTags'); document.getElementById('selectedCount').textContent = selectedTerms.length;
+  if (!selectedTerms.length) { container.innerHTML = '<span style="color:var(--text3);font-size:12px;">No terms selected</span>'; return; }
+  container.innerHTML = '';
+  selectedTerms.forEach(t => {
+    const catInfo = MESH_CATEGORIES.find(c => c.code === t.category); const tag = document.createElement('div'); tag.className = 'tag';
+    tag.style.background = catInfo ? catInfo.color + '22' : 'var(--accent-bg)'; tag.style.color = catInfo ? catInfo.color : 'var(--accent)';
+    tag.innerHTML = `${t.name}<button onclick="removeTerm('${t.name.replace(/'/g,"\\'")}')">×</button>`; container.appendChild(tag);
+  });
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function fetchCountForYear(term, year) {
+  const cacheKey = `term_${term.replace(/\s+/g, '_')}_${year}`, cachedValue = getCachedValue(cacheKey);
+  if (cachedValue !== null) return cachedValue;
+  const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(term + '[MeSH Terms]')}+AND+(${year}[pdat])&retmax=0&retmode=json`;
+  try {
+    const resp = await fetch(url), data = await resp.json(), count = parseInt(data.esearchresult?.count || 0, 10);
+    setCachedValue(cacheKey, count, year); return count;
+  } catch { return 0; }
+}
+
+async function fetchTotalPubMed(year) {
+  const cacheKey = `total_pubmed_${year}`, cachedValue = getCachedValue(cacheKey);
+  if (cachedValue !== null) return cachedValue;
+  const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${year}[pdat]&retmax=0&retmode=json`;
+  try {
+    const resp = await fetch(url), data = await resp.json(), count = parseInt(data.esearchresult?.count || 1, 10);
+    setCachedValue(cacheKey, count, year); return count;
+  } catch { return 1; }
+}
+
+async function runAnalysis() {
+  if (!selectedTerms.length || !selectedYears.length) { alert('Select terms and years first.'); return; }
+  const btn = document.getElementById('runBtn'); btn.disabled = true;
+  ['statusBar','progressBar'].forEach(id => document.getElementById(id).style.display = 'block');
+  ['emptyState','chartWrap','metricsRow'].forEach(id => document.getElementById(id).style.display = 'none');
+  document.getElementById('legendRow').innerHTML = '';
+
+  const normalize = document.getElementById('normalize').value;
+  let missingYears = [], missingCombos = [];
+  selectedYears.forEach(y => {
+    if (normalize === 'pct' && getCachedValue(`total_pubmed_${y}`) === null) missingYears.push(y);
+    selectedTerms.forEach(t => { if (getCachedValue(`term_${t.name.replace(/\s+/g,'_')}_${y}`) === null) missingCombos.push({ t: t.name, y }); });
+  });
+
+  const totalCalls = missingYears.length + missingCombos.length; let currentCall = 0;
+  const updateProgress = msg => { currentCall++; document.getElementById('statusText').textContent = msg; document.getElementById('progressFill').style.width = totalCalls > 0 ? Math.round((currentCall / totalCalls) * 100) + '%' : '100%'; };
+
+  resultsData = {}; yearlyTotals = {};
+  for (const y of selectedYears) {
+    if (normalize === 'pct') {
+      const v = getCachedValue(`total_pubmed_${y}`);
+      if (v !== null) yearlyTotals[y] = v; else { updateProgress(`Fetching base global count for ${y}…`); yearlyTotals[y] = await fetchTotalPubMed(y); await sleep(340); }
+    }
+  }
+
+  for (const t of selectedTerms) {
+    resultsData[t.name] = {};
+    for (const y of selectedYears) {
+      const v = getCachedValue(`term_${t.name.replace(/\s+/g,'_')}_${y}`);
+      if (v !== null) resultsData[t.name][y] = v; else { updateProgress(`Downloading: ${t.name} (${y})`); resultsData[t.name][y] = await fetchCountForYear(t.name, y); await sleep(340); }
+    }
+  }
+
+  ['statusBar','progressBar'].forEach(id => document.getElementById(id).style.display = 'none');
+  btn.disabled = false; renderResults();
+}
+
+function getProcessedData() {
+  const maxTerms = +document.getElementById('maxTerms').value, sortBy = document.getElementById('sortBy').value, normalize = document.getElementById('normalize').value;
+  let terms = Object.keys(resultsData); const totals = {};
+  terms.forEach(t => totals[t] = selectedYears.reduce((s, y) => s + (resultsData[t][y] || 0), 0));
+  const lastYear = selectedYears[selectedYears.length - 1], firstYear = selectedYears[0];
+
+  if (sortBy === 'total_desc') terms.sort((a, b) => totals[b] - totals[a]);
+  else if (sortBy === 'total_asc') terms.sort((a, b) => totals[a] - totals[b]);
+  else if (sortBy === 'recent_desc') terms.sort((a, b) => (resultsData[b][lastYear] || 0) - (resultsData[a][lastYear] || 0));
+  else if (sortBy === 'growth_desc') {
+    terms.sort((a, b) => {
+      const ga = selectedYears.length > 1 ? ((resultsData[a][lastYear] || 0) - (resultsData[a][firstYear] || 1)) / Math.max(resultsData[a][firstYear] || 1, 1) : 0;
+      const gb = selectedYears.length > 1 ? ((resultsData[b][lastYear] || 0) - (resultsData[b][firstYear] || 1)) / Math.max(resultsData[b][firstYear] || 1, 1) : 0;
+      return gb - ga;
+    });
+  } else if (sortBy === 'alpha') terms.sort();
+
+  if (maxTerms < 999) terms = terms.slice(0, maxTerms);
+  const data = {};
+  terms.forEach(t => { data[t] = {}; selectedYears.forEach(y => { data[t][y] = normalize === 'pct' && yearlyTotals[y] ? +(resultsData[t][y] / yearlyTotals[y] * 100).toFixed(4) : (resultsData[t][y] || 0); }); });
+  return { terms, data, totals };
+}
+
+function renderResults() { const { terms, data, totals } = getProcessedData(); renderMetrics(terms, data, totals); renderChart(terms, data); renderTable(terms, data, totals); renderTrends(terms, data, totals); }
+
+function renderMetrics(terms, data, totals) {
+  const row = document.getElementById('metricsRow'), norm = document.getElementById('normalize').value, topTerm = terms[0];
+  let growth = ''; if (topTerm && selectedYears.length > 1) { const g = ((data[topTerm][selectedYears[selectedYears.length-1]] || 0) - (data[topTerm][selectedYears[0]] || 0)) / Math.max(data[topTerm][selectedYears[0]] || 1, 1) * 100; growth = (g >= 0 ? '+' : '') + g.toFixed(0) + '%'; }
+  row.innerHTML = `
+    <div class="metric"><div class="metric-label">Terms analyzed</div><div class="metric-value">${terms.length}</div><div class="metric-sub">across ${selectedYears.length} years</div></div>
+    <div class="metric"><div class="metric-label">Total publications</div><div class="metric-value">${norm==='raw' ? Object.values(totals).reduce((a,b)=>a+b,0).toLocaleString() : '—'}</div><div class="metric-sub">selected sum</div></div>
+    <div class="metric"><div class="metric-label">Top term</div><div class="metric-value" style="font-size:14px;line-height:1.3">${topTerm || '—'}</div><div class="metric-sub">${norm==='raw'?(totals[topTerm]||0).toLocaleString()+' papers':''}</div></div>
+    ${growth ? `<div class="metric"><div class="metric-label">Top term growth</div><div class="metric-value" style="color:${growth.startsWith('-')?'var(--danger)':'var(--success)'}">${growth}</div><div class="metric-sub">${selectedYears[0]}→${selectedYears[selectedYears.length-1]}</div></div>` : ''}
+  `;
+  row.style.display = 'grid';
+}
+
+function renderChart(terms, data) {
+  const type = document.getElementById('chartType').value, norm = document.getElementById('normalize').value, wrap = document.getElementById('chartWrap');
+  wrap.style.display = 'block'; wrap.style.height = type === 'bar' && selectedYears.length > 6 ? Math.max(320, selectedYears.length * 40) + 'px' : '360px';
+  if (chartInstance) chartInstance.destroy();
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches, gridC = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)', tickC = isDark ? '#a0a09a' : '#888780';
+  const isStacked = type === 'bar_stacked', cType = type === 'line' ? 'line' : 'bar';
+
+  const datasets = terms.map((term, i) => {
+    const c = CHART_COLORS[i % CHART_COLORS.length], vals = selectedYears.map(y => data[term][y] || 0);
+    const b = { label: term, data: vals, backgroundColor: c + (cType === 'bar' ? 'cc' : '33'), borderColor: c, borderWidth: cType === 'line' ? 2 : 0 };
+    if (cType === 'line') { b.fill = false; b.tension = 0.35; b.pointRadius = 4; } return b;
+  });
+
+  chartInstance = new Chart(document.getElementById('mainChart'), {
+    type: cType, data: { labels: selectedYears.map(String), datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false, callbacks: { label: ctx => ` ${ctx.dataset.label}: ${norm === 'pct' ? ctx.parsed.y.toFixed(4) + '%' : ctx.parsed.y.toLocaleString()}` } } },
+      scales: { x: { stacked: isStacked, grid: { color: gridC }, ticks: { color: tickC } }, y: { stacked: isStacked, grid: { color: gridC }, ticks: { color: tickC, callback: v => norm === 'pct' ? v.toFixed(2) + '%' : v.toLocaleString() } } }
+    }
+  });
+
+  const leg = document.getElementById('legendRow'); leg.innerHTML = '';
+  terms.forEach((t, i) => { leg.innerHTML += `<span class="legend-item"><span class="legend-dot" style="background:${CHART_COLORS[i % CHART_COLORS.length]}"></span>${t}</span>`; });
+}
+
+function renderTable(terms, data, totals) {
+  const norm = document.getElementById('normalize').value;
+  let html = '<div class="table-wrap"><table><thead><tr><th>Term</th><th>Category</th>' + selectedYears.map(y => `<th>${y}</th>`).join('') + '<th>Total</th></tr></thead><tbody>';
+  terms.forEach((t, i) => {
+    const catCode = selectedTerms.find(st => st.name === t)?.category || '', catInfo = MESH_CATEGORIES.find(c => c.code === catCode);
+    html += `<tr><td style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:2px;background:${CHART_COLORS[i % CHART_COLORS.length]};display:inline-block;"></span>${t}</td><td>${catInfo ? `<span class="term-category" style="color:${catInfo.color}">${catInfo.code}</span>` : '—'}</td>`;
+    selectedYears.forEach(y => html += `<td>${norm === 'pct' ? data[t][y].toFixed(3) + '%' : (data[t][y] || 0).toLocaleString()}</td>`);
+    html += `<td style="font-weight:500">${norm === 'raw' ? totals[t].toLocaleString() : '—'}</td></tr>`;
+  });
+  document.getElementById('tableContent').innerHTML = html + '</tbody></table></div>';
+}
+
+function renderTrends(terms, data, totals) {
+  const container = document.getElementById('trendsContent'); if (selectedYears.length < 2) { container.innerHTML = '<div class="empty-state"><i class="ti ti-trending-up"></i><p>Select 2+ years for trend views.</p></div>'; return; }
+  const fY = selectedYears[0], lY = selectedYears[selectedYears.length - 1]; let html = '<div style="display:grid;gap:12px;">';
+  terms.forEach((t, i) => {
+    const c = CHART_COLORS[i % CHART_COLORS.length], first = data[t][fY] || 0, last = data[t][lY] || 0, growth = first > 0 ? ((last - first) / first * 100) : (last > 0 ? 999 : 0);
+    const peakY = selectedYears.reduce((a, b) => (data[t][a] || 0) >= (data[t][b] || 0) ? a : b), trendClass = growth > 5 ? 'trend-up' : growth < -5 ? 'trend-down' : 'trend-flat';
+    const pts = selectedYears.map((y, j) => `${Math.round(j * (120/(selectedYears.length-1||1)))},${Math.round(32 - ((data[t][y]||0)/Math.max(...selectedYears.map(yr=>data[t][yr]||0),1)) * 32)}`).join(' ');
+    html += `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--bg2);">
+      <span style="width:10px;height:10px;border-radius:2px;background:${c}"></span><span style="flex:1;font-weight:500;">${t}</span>
+      <svg width="120" height="32"><polyline points="${pts}" fill="none" stroke="${c}" stroke-width="1.5"/></svg>
+      <div style="text-align:right;"><span class="trend-chip ${trendClass}">${growth===999?'New':(growth>=0?'+':'')+growth.toFixed(0)+'%'}</span><div style="font-size:11px;color:var(--text3);margin-top:3px;">Peak: ${peakY}</div></div>
+    </div>`;
+  });
+  container.innerHTML = html + '</div>';
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.tab-btn[onclick*="${name}"]`).classList.add('active'); document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'chart' && chartInstance) chartInstance.resize();
+}
+
+document.getElementById('maxTerms').onchange = () => { if (Object.keys(resultsData).length) renderResults(); };
+document.getElementById('sortBy').onchange = () => { if (Object.keys(resultsData).length) renderResults(); };
+document.getElementById('chartType').onchange = () => { if (Object.keys(resultsData).length) renderChart(...Object.values(getProcessedData())); };
+
+initYears(); initCategories(); showPopularTerms(); selectYearRange(2020, 2026);
+</script>
+</body>
+</html>
