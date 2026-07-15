@@ -26,7 +26,7 @@ async function loadGoogleFont(
     throw new Error(`Unsupported font request: ${font} ${weight}`);
   }
 
-  const packageName = font === "Inter" ? "inter" : ["jet", "brains", "mono"].join("-");
+  const packageName = font === "Inter" ? "inter" : "jetbrains-mono";
   const fontPackageRoot = path.join(repoRoot, "node_modules", ["@", "font", "source"].join(""));
   const filePath = path.join(
     fontPackageRoot,
