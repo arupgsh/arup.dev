@@ -36,7 +36,7 @@ async function loadGoogleFont(
   );
 
   const data = await fs.readFile(filePath);
-  return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+  return new Uint8Array(data).buffer;
 }
 
 async function loadGoogleFonts(
