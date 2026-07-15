@@ -9,14 +9,14 @@ async function loadGoogleFont(
   // Read font binaries from the installed local font packages.
   const fontMap: Record<string, Record<number, string>> = {
     Inter: {
-      400: "inter-latin-400-normal.woff2",
-      500: "inter-latin-500-normal.woff2",
-      600: "inter-latin-600-normal.woff2",
-      700: "inter-latin-700-normal.woff2",
+      400: "inter-latin-400-normal.woff",
+      500: "inter-latin-500-normal.woff",
+      600: "inter-latin-600-normal.woff",
+      700: "inter-latin-700-normal.woff",
     },
     "JetBrains+Mono": {
-      400: "jetbrains-mono-latin-400-normal.woff2",
-      700: "jetbrains-mono-latin-700-normal.woff2",
+      400: "jetbrains-mono-latin-400-normal.woff",
+      700: "jetbrains-mono-latin-700-normal.woff",
     },
   };
 
