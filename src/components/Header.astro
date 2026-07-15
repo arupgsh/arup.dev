@@ -14,9 +14,11 @@ const { pathname } = Astro.url;
 const currentPath =
   pathname.endsWith("/") && pathname !== "/" ? pathname.slice(0, -1) : pathname;
 
+const keepSegment = (segment: string) => segment.trim();
+
 const isActive = (path: string) => {
-  const currentPathArray = currentPath.split("/").filter(p => p.trim());
-  const pathArray = path.split("/").filter(p => p.trim());
+  const currentPathArray = currentPath.split("/").filter(keepSegment);
+  const pathArray = path.split("/").filter(keepSegment);
 
   return currentPath === path || currentPathArray[0] === pathArray[0];
 };
@@ -44,7 +46,7 @@ const isActive = (path: string) => {
   >
     <a
       href="/"
-      class="absolute py-1 text-xl leading-8 font-semibold whitespace-nowrap sm:static sm:my-auto sm:text-2xl sm:leading-none"
+      class="absolute py-1 text-[17px] font-semibold leading-none tracking-[-0.03em] whitespace-nowrap text-foreground sm:static sm:my-auto sm:text-[19px]"
     >
       {SITE.title}
     </a>

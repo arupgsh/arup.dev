@@ -48,7 +48,7 @@ const sortedYears = Object.keys(publicationsByYear).sort((yearA, yearB) => {
   <Main
     pageTitle="Publications"
     pageDescHtml={
-      'For latest publications, please check my <a href="https://scholar.google.com/citations?hl=en&user=W33ADNoAAAAJ&view_op=list_works&sortby=pubdate" class="text-accent underline decoration-dashed underline-offset-4" rel="noopener noreferrer" target="_blank">Google Scholar profile</a>.'
+      'For latest publications, please check my <a href="https://scholar.google.com/citations?hl=en&user=W33ADNoAAAAJ&view_op=list_works&sortby=pubdate" class="text-accent underline decoration-solid underline-offset-3" rel="noopener noreferrer" target="_blank">Google Scholar profile</a>.'
     }
   >
     {
@@ -80,9 +80,9 @@ const sortedYears = Object.keys(publicationsByYear).sort((yearA, yearB) => {
                           collapsedAuthors.length > 0 && (
                             <>
                               {" "}
-                              <button
+                                <button
                                 type="button"
-                                class="author-expand inline cursor-pointer border-0 bg-transparent p-0 align-baseline text-accent underline decoration-dashed underline-offset-4"
+                                class="author-expand inline cursor-pointer border-0 bg-transparent p-0 align-baseline text-accent underline decoration-solid underline-offset-3"
                                 aria-controls={authorExtraId}
                                 aria-expanded="false"
                               >

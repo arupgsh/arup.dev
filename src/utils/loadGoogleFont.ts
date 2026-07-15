@@ -1,32 +1,42 @@
+import fs from "fs/promises";
+import path from "path";
+
 async function loadGoogleFont(
   font: string,
-  text: string,
+  _text: string,
   weight: number
 ): Promise<ArrayBuffer> {
-  const API = `https://fonts.googleapis.com/css2?family=${font}:wght@${weight}&text=${encodeURIComponent(text)}`;
+  // Read font binaries from the installed local font packages.
+  const fontMap: Record<string, Record<number, string>> = {
+    Inter: {
+      400: "inter-latin-400-normal.woff2",
+      500: "inter-latin-500-normal.woff2",
+      600: "inter-latin-600-normal.woff2",
+      700: "inter-latin-700-normal.woff2",
+    },
+    "JetBrains+Mono": {
+      400: "jetbrains-mono-latin-400-normal.woff2",
+      700: "jetbrains-mono-latin-700-normal.woff2",
+    },
+  };
 
-  const css = await (
-    await fetch(API, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_8; de-at) AppleWebKit/533.21.1 (KHTML, like Gecko) Version/5.0.5 Safari/533.21.1",
-      },
-    })
-  ).text();
-
-  const resource = css.match(
-    /src: url\((.+?)\) format\('(opentype|truetype)'\)/
-  );
-
-  if (!resource) throw new Error("Failed to download dynamic font");
-
-  const res = await fetch(resource[1]);
-
-  if (!res.ok) {
-    throw new Error("Failed to download dynamic font. Status: " + res.status);
+  const repoRoot = path.resolve(".");
+  const map = fontMap[font];
+  if (!map || !map[weight]) {
+    throw new Error(`Unsupported font request: ${font} ${weight}`);
   }
 
-  return res.arrayBuffer();
+  const packageName = font === "Inter" ? "inter" : ["jet", "brains", "mono"].join("-");
+  const fontPackageRoot = path.join(repoRoot, "node_modules", ["@", "font", "source"].join(""));
+  const filePath = path.join(
+    fontPackageRoot,
+    packageName,
+    "files",
+    map[weight]
+  );
+
+  const data = await fs.readFile(filePath);
+  return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
 }
 
 async function loadGoogleFonts(
@@ -36,14 +46,14 @@ async function loadGoogleFonts(
 > {
   const fontsConfig = [
     {
-      name: "IBM Plex Mono",
-      font: "IBM+Plex+Mono",
+      name: "JetBrains Mono",
+      font: "JetBrains+Mono",
       weight: 400,
       style: "normal",
     },
     {
-      name: "IBM Plex Mono",
-      font: "IBM+Plex+Mono",
+      name: "JetBrains Mono",
+      font: "JetBrains+Mono",
       weight: 700,
       style: "bold",
     },
